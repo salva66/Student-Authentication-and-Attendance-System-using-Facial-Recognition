@@ -6,14 +6,10 @@ import mysql.connector
 from cv2 import cv2
 import os
 import numpy as np
-import time
 from time import strftime
 from datetime import datetime
 import csv
-from plyer import notification
 from tkinter import filedialog
-from playsound import playsound
-import multiprocessing
 
 
 class Face_recognition:
@@ -22,66 +18,114 @@ class Face_recognition:
         self.root.geometry("1530x790+0+0")
         self.root.title("Face Or Iris Recognition System")
 
-        # ======================variables=========================
-        self.var_dep=StringVar()
-        self.var_photoID=StringVar()
-        self.var_course=StringVar()
-        self.var_year=StringVar()
-        self.var_semester=StringVar()
-        self.va_reg_No=StringVar()
-        self.var_FirstName=StringVar()
-        self.var_MiddleName=StringVar()
-        self.var_LastName=StringVar()
-        self.var_studentEmail=StringVar()
-        self.var_DoB=StringVar()
-        self.var_gender=StringVar()
-        self.var_photo=StringVar()
-        self.var_prog_codeL=StringVar()
-        self.var_prog_codeN=StringVar()
-        self.var_program=StringVar()
-        self.var_course_name=StringVar()
-        self.var_reg_Status=StringVar()
-        self.var_reg_ID=StringVar()
-        self.var_regi_ID=StringVar()
-        self.var_status=StringVar()
-        self.var_hours=StringVar()
-        self.var_mins=StringVar()
-        self.var_secs=StringVar()
-        self.var_hours.set('00')
-        self.var_mins.set('00')
-        self.var_secs.set('00')
-        
-
-
 
         title_lbl=Label(self.root,text="FACE RECOGNITION", font=("times new roman",35,"bold"),bg="white",fg="darkgreen")
         title_lbl.place(x=0,y=0,width=1390,height=45)
 
-        # background image
-        img3=Image.open(r"layout_images\cive.jpg")
-        img3=img3.resize((1390,615),Image.ANTIALIAS)
-        self.photoimg3=ImageTk.PhotoImage(img3)
+        img1=Image.open(r"layout_images\udom.jpg")
+        img1=img1.resize((650,700),Image.ANTIALIAS)
+        self.photoimg1=ImageTk.PhotoImage(img1)
 
-        bg_img=Label(self.root,image=self.photoimg3)
-        bg_img.place(x=0,y=60,width=1390,height=615)
+        f_lbl=Label(self.root,image=self.photoimg1)
+        f_lbl.place(x=0,y=55,width=650,height=630)
 
-        main_frame=Frame(bg_img,bd=2)
-        main_frame.place(x=5,y=10,width=1345,height=590)
+        img2=Image.open(r"layout_images\recognition-banner.jpg")
+        img2=img2.resize((950,700),Image.ANTIALIAS)
+        self.photoimg2=ImageTk.PhotoImage(img2)
 
-        # supervision course information
-        supervision_course_frame=LabelFrame(main_frame,bd=2,relief=RIDGE,text="Supervision Course Details",font=("times new roman",20,"bold"))
-        supervision_course_frame.place(x=0,y=0,width=650,height=520)
+        f_lbl=Label(self.root,image=self.photoimg2)
+        f_lbl.place(x=650,y=55,width=950,height=630)
 
-        # supervising course
-        supervising_label=Label(supervision_course_frame,text="Supervised Course:",font=("times new roman",25,"bold"))
-        supervising_label.grid(row=0,column=0,padx=10,sticky=W)
+        #button
 
-        supervising_combo=ttk.Combobox(supervision_course_frame,textvariable=self.var_course_name,font=("times new roman",20,"bold"),state="readonly",width=17)
-        supervising_combo["values"]=("Select Course","TN 430","CS 430","CP 222","IA 116")
-        supervising_combo.current(0)
-        supervising_combo.grid(row=0,column=1,padx=2,pady=10,sticky=W)
+        b1_1=Button(f_lbl,text="FACE RECOGNITION",command=self.face_recog,cursor="hand2", font=("times new roman",18,"bold"),bg="darkblue",fg="white")
+        b1_1.place(x=365,y=500,width=300,height=40)
 
+    # ========attendance ======================
+    def mark_attendance(self,r,f,l,p):
+        with open("attendance1.csv",newline="\n") as f:
+            myDataList=f.readlines()
+            name_list=[]
+            for line in myDataList:
+                entry=line.split((","))
+                name_list.append(entry[0])
+            if((r not in name_list) and (f not in name_list) and (l not in name_list) and (p not in name_list)):
+                now=datetime.now()
+                d1=now.strftime("%d/%m/%Y")
+                dtString=now.strftime("%H:%M:%S")
+                f.writelines(f"\n{f},{l},{r},{p},{dtString},{d1},Present")         
+
+
+# ==============face recognition====================
+    def face_recog (self):
+        def draw_boundary(img,classifier,scaleFactor,minNeighbors,color,text,clf):
+            gray_image=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+            features=classifier.detectMultiScale(gray_image,scaleFactor,minNeighbors)
+
+            coord=[]
+
+            for (x,y,w,h) in features:
+                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),3)
+                id,predict=clf.predict(gray_image[y:y+h,x:x+w])
+                confidence=int((100*(1-predict/300)))
+
+                conn=mysql.connector.connect(host="localhost",username="root",password="1Chibole",database="face_recognizer")
+                my_cursor=conn.cursor()
+                
+                my_cursor.execute("select FirstName from student where photoID="+str(id))
+                f=my_cursor.fetchone()
+               # f=str(f)
+                f="+".join(f)
+
+                my_cursor.execute("select LastName from student where photoID="+str(id))
+                l=my_cursor.fetchone()
+               # l=str(l)
+                l="+".join(l)
+
+                my_cursor.execute("select course from student where photoID="+str(id))
+                p=my_cursor.fetchone()
+                #p=str(p)
+                p="+".join(p)
+
+                my_cursor.execute("select reg_No from student where photoID="+str(id))
+                r=my_cursor.fetchone()
+                #r=str(r)
+                r="+".join(r)
+
+
+                if confidence>60:
+                    cv2.putText(img,f"FName:{f}",(x,y-55),cv2.FONT_HERSHEY_COMPLEX,0.8,(255,255,255),3)
+                    cv2.putText(img,f"LName:{l}",(x,y-15),cv2.FONT_HERSHEY_COMPLEX,0.8,(255,255,255),3)
+                    cv2.putText(img,f"reg_No:{r}",(x,y-30),cv2.FONT_HERSHEY_COMPLEX,0.8,(255,255,255),3)
+                    cv2.putText(img,f"Programme:{p}",(x,y-5),cv2.FONT_HERSHEY_COMPLEX,0.8,(255,255,255),3)
+                    self.mark_attendance(f,l,r,p)
+                else:
+                    cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),3)
+                    cv2.putText(img,"INELIGIBLE STUDENT",(x,y-5),cv2.FONT_HERSHEY_COMPLEX,0.8,(255,255,255),3)
+
+                coord=[x,y,w,y]
+
+            return coord
+
+        def recognize(img,clf,faceCascade):
+            coord=draw_boundary(img,faceCascade,1.1,10,(255,25,255),"Face",clf)
+            return img
         
+        faceCascade=cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+        clf=cv2.face.LBPHFaceRecognizer_create()
+        clf.read("classifier.xml")
+
+        video_cap=cv2.VideoCapture(0)
+
+        while True:
+            ret,img=video_cap.read()
+            img=recognize(img,clf,faceCascade)
+            cv2.imshow("Welcome to Face Recognition",img)
+
+            if cv2.waitKey(1)==13:
+                break
+        video_cap.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     root=Tk()
