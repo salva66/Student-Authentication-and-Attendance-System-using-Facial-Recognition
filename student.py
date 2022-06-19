@@ -523,7 +523,7 @@ class Student:
                                                                                                 self.var_studentEmail.get(),
                                                                                                 self.var_gender.get(),
                                                                                                 self.var_radio1.get(),
-                                                                                                self.var_photoID.get()==id+1
+                                                                                                self.va_photoID.get()==id+1
                                                                                             ))
                 conn.commit()
                 self.fetch_data()
@@ -555,7 +555,8 @@ class Student:
                         conn=mysql.connector.connect(host="localhost",username="root",password="1Chibole",database="face_recognizer")
                         my_cursor=conn.cursor()
                         #my_cursor.execute("select photoID from student where RegistrationNumber=%s",self.var_photoID.get())
-                        file_name_path="data/student."+str(2)+"."+str(img_id)+".jpg"
+                        file_name_path="data/student."+str(id)+"."+str(img_id)+".jpg"
+                        #file_name_path="data/student."+str(2)+"."+str(img_id)+".jpg"
                         cv2.imwrite(file_name_path,face)
                         cv2.putText(face,str(img_id),(50,50),cv2.FONT_HERSHEY_COMPLEX,2,(0,255,0),2)
                         cv2.imshow("Cropped Face",face)
@@ -563,7 +564,7 @@ class Student:
                         self.fetch_data()
                         conn.close()
 
-                    if cv2.waitKey(1)==13 or int(img_id)==30:
+                    if cv2.waitKey(1)==13 or int(img_id)==100:
                         break
                 cap.release()
                 cv2.destroyAllWindows()
